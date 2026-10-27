@@ -1,0 +1,43 @@
+name: nonce-solve
+on:
+  workflow_dispatch:
+    inputs:
+      cnf: {description: "gz cnf path", default: "inst.cnf.gz"}
+      init: {description: "init assignment or -", default: "d99s.txt"}
+      secs: {description: "max seconds per solver", default: "600"}
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    steps:
+      - uses: actions/checkout@v4
+      - name: build
+        working-directory: nonce
+        run: gcc -O3 -march=native -o psk psk.c -lm && gcc -O3 -march=native -o wls wls.c
+      - name: solve
+        working-directory: nonce
+        run: |
+          gunzip -c ${{ inputs.cnf }} > p.cnf
+          N=$(nproc); echo "cores $N"
+          S=${{ matrix.seed }}
+          for i in $(seq 1 $N); do
+            if [ $((i % 2)) -eq 1 ]; then
+              ./psk p.cnf $((S*100+i)) ${{ inputs.secs }} 5.5 ${{ inputs.init }} > out_$i.txt 2> log_$i.txt &
+            else
+              mkdir -p w$i; (cd w$i && ../wls ../p.cnf $((S*100+i)) ${{ inputs.secs }} ../${{ inputs.init }} 0.02 0.8 > ../out_$i.txt 2> ../log_$i.txt) &
+            fi
+          done
+          wait || true
+          cat log_*.txt
+          F=$(grep -l SATISFIABLE out_*.txt | head -n 1 || true)
+          if [ -n "$F" ]; then
+            mkdir -p results; cp $F results/sol_${S}_$(date +%s).txt
+            git config user.email bot@users.noreply.github.com; git config user.name solver
+            git add results; git commit -m "solution seed $S"
+            for t in 1 2 3 4 5; do git pull --rebase && git push && break; sleep 3; done
+          fi
