@@ -22,6 +22,7 @@ jobs:
       - name: solve
         working-directory: nonce
         run: |
+          [ -f ${{ inputs.cnf }} ] || cat ${{ inputs.cnf }}.part* > ${{ inputs.cnf }}
           gunzip -c ${{ inputs.cnf }} > p.cnf
           N=$(nproc); echo "cores $N"
           S=${{ matrix.seed }}
