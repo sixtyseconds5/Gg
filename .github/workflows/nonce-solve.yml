@@ -36,9 +36,8 @@ jobs:
           wait || true
           cat log_*.txt
           F=$(grep -l SATISFIABLE out_*.txt | head -n 1 || true)
-          if [ -n "$F" ]; then
-            mkdir -p results; cp $F results/sol_${S}_$(date +%s).txt
-            git config user.email bot@users.noreply.github.com; git config user.name solver
-            git add results; git commit -m "solution seed $S"
-            for t in 1 2 3 4 5; do git pull --rebase && git push && break; sleep 3; done
-          fi
+          mkdir -p results; cat log_*.txt > results/log_${S}_${{ github.run_id }}.txt
+          if [ -n "$F" ]; then cp $F results/sol_${S}_${{ github.run_id }}.txt; fi
+          git config user.email bot@users.noreply.github.com; git config user.name solver
+          git add results; git commit -m "result seed $S"
+          for t in 1 2 3 4 5 6 7 8 9 10; do git pull --rebase && git push && break; sleep $((RANDOM % 7 + 2)); done
