@@ -1,0 +1,4 @@
+c flips 1028653056 time 900.02 best 15 final 30
+c steps 1082130432 time 900.12 best 15 final 18
+c flips 1112539136 time 900.20 best 15 final 23
+c steps 1095761920 time 900.01 best 16 final 19
