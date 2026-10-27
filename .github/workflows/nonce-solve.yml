@@ -22,15 +22,15 @@ jobs:
       - name: solve
         working-directory: nonce
         run: |
-          [ -f ${{ inputs.cnf }} ] || cat ${{ inputs.cnf }}.part* > ${{ inputs.cnf }}
-          gunzip -c ${{ inputs.cnf }} > p.cnf
+          [ -f ${{ inputs.cnf || 'inst.cnf.gz' }} ] || cat ${{ inputs.cnf || 'inst.cnf.gz' }}.part* > ${{ inputs.cnf || 'inst.cnf.gz' }}
+          gunzip -c ${{ inputs.cnf || 'inst.cnf.gz' }} > p.cnf
           N=$(nproc); echo "cores $N"
-          S=${{ matrix.seed }}
+          S=${{ matrix.seed }}; R0=$(( ${{ github.run_id }} % 1000000 ))
           for i in $(seq 1 $N); do
             if [ $((i % 2)) -eq 1 ]; then
-              ./psk p.cnf $((S*100+i)) ${{ inputs.secs }} 5.5 ${{ inputs.init }} > out_$i.txt 2> log_$i.txt &
+              ./psk p.cnf $((R0*1000+S*100+i)) ${{ inputs.secs || '900' }} 5.5 ${{ inputs.init || 'd99s.txt' }} > out_$i.txt 2> log_$i.txt &
             else
-              mkdir -p w$i; (cd w$i && ../wls ../p.cnf $((S*100+i)) ${{ inputs.secs }} ../${{ inputs.init }} 0.02 0.8 > ../out_$i.txt 2> ../log_$i.txt) &
+              mkdir -p w$i; (cd w$i && ../wls ../p.cnf $((R0*1000+S*100+i)) ${{ inputs.secs || '900' }} ../${{ inputs.init || 'd99s.txt' }} 0.02 0.8 > ../out_$i.txt 2> ../log_$i.txt) &
             fi
           done
           wait || true
